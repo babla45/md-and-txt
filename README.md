@@ -23,8 +23,8 @@ This project is a web application for viewing and managing Markdown and text fil
 
 1. Clone the repository:
     ```sh
-    git clone https://github.com/your-username/md-txt-viewer.git
-    cd md-txt-viewer
+    git clone https://github.com/babla45/md-and-txt.git
+    cd md-and-txt
     ```
 
 2. Open the project in your preferred code editor.

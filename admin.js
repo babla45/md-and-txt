@@ -15,7 +15,9 @@ async function loadFiles() {
     const { data, error } = await supabaseClient
         .storage
         .from('mdtxt')
-        .list('')
+        .list('', {
+            sortBy: { column: 'created_at', order: 'desc' }
+        })
 
     if (error) {
         console.error('Error loading files:', error)
