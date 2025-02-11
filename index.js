@@ -65,6 +65,13 @@ async function viewFile(fileName) {
 
     fileTitle.textContent = fileName
     if (fileName.endsWith('.md')) {
+        // Update markdown and syntax styles based on current theme before rendering
+        const isDark = document.body.classList.contains('dark-mode');
+        document.getElementById('markdown-style').href = 
+            `https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown${isDark ? '-dark' : ''}.min.css`;
+        document.getElementById('highlight-style').href = 
+            `https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github${isDark ? '-dark' : ''}.min.css`;
+
         fileContent.innerHTML = marked.parse(text)
         // Initialize syntax highlighting
         fileContent.querySelectorAll('pre code').forEach((block) => {
