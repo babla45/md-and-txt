@@ -19,6 +19,8 @@ marked.setOptions({
     }
 });
 
+let allFiles = []; // Store all files for searching
+
 async function loadFiles() {
     const { data, error } = await supabaseClient
         .storage
@@ -30,8 +32,13 @@ async function loadFiles() {
         return
     }
 
+    allFiles = data; // Store files for searching
+    displayFiles(data);
+}
+
+function displayFiles(files) {
     const fileGrid = document.getElementById('fileGrid')
-    fileGrid.innerHTML = data.map(file => `
+    fileGrid.innerHTML = files.map(file => `
         <div class="col">
             <div class="card h-100">
                 <div class="card-body">
@@ -43,8 +50,31 @@ async function loadFiles() {
         </div>
     `).join('')
 
-    // Hide file viewer on initial load
     document.getElementById('fileViewer').style.display = 'none'
+}
+
+function handleSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const resetBtn = document.getElementById('resetSearchBtn');
+    const searchTerm = searchInput.value.toLowerCase();
+    
+    // Show/hide reset button based on search input
+    resetBtn.style.display = searchTerm.length > 0 ? 'block' : 'none';
+    
+    // Filter files
+    const filteredFiles = allFiles.filter(file => 
+        file.name.toLowerCase().includes(searchTerm)
+    );
+    displayFiles(filteredFiles);
+}
+
+function resetSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const resetBtn = document.getElementById('resetSearchBtn');
+    
+    searchInput.value = '';
+    resetBtn.style.display = 'none';
+    displayFiles(allFiles);
 }
 
 async function viewFile(fileName) {
@@ -72,6 +102,8 @@ async function viewFile(fileName) {
         document.getElementById('highlight-style').href = 
             `https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github${isDark ? '-dark' : ''}.min.css`;
 
+        // Store raw content for copying
+        fileContent.setAttribute('data-raw-content', text);
         fileContent.innerHTML = marked.parse(text)
         // Initialize syntax highlighting
         fileContent.querySelectorAll('pre code').forEach((block) => {
@@ -82,6 +114,40 @@ async function viewFile(fileName) {
     }
     fileViewer.style.display = 'block'
     fileViewer.scrollIntoView({ behavior: 'smooth' })
+}
+
+async function copyContent() {
+    const content = document.getElementById('fileContent');
+    let textToCopy;
+    
+    // If it's markdown, get the raw text from the data attribute
+    if (content.hasAttribute('data-raw-content')) {
+        textToCopy = content.getAttribute('data-raw-content');
+    } else {
+        // For text files, get the content from pre tag
+        textToCopy = content.textContent;
+    }
+
+    try {
+        await navigator.clipboard.writeText(textToCopy);
+        const copyBtn = document.querySelector('#fileViewer .btn-outline-primary');
+        const originalHtml = copyBtn.innerHTML;
+        
+        // Show success feedback
+        copyBtn.innerHTML = '<i class="bi bi-check"></i> Copied!';
+        copyBtn.classList.add('btn-success');
+        copyBtn.classList.remove('btn-outline-primary');
+        
+        // Reset button after 2 seconds
+        setTimeout(() => {
+            copyBtn.innerHTML = originalHtml;
+            copyBtn.classList.remove('btn-success');
+            copyBtn.classList.add('btn-outline-primary');
+        }, 2000);
+    } catch (err) {
+        console.error('Failed to copy:', err);
+        alert('Failed to copy content');
+    }
 }
 
 function hideFileViewer() {

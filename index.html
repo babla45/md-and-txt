@@ -42,6 +42,19 @@
             </div>
         </div>
 
+        <!-- Updated search box -->
+        <div class="mb-4">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" class="form-control" id="searchInput" placeholder="Search files..." onkeyup="handleSearch()">
+                <button class="btn btn-outline-secondary" type="button" onclick="resetSearch()" id="resetSearchBtn" style="display: none">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+        </div>
+
         <!-- File Grid -->
         <div id="fileGrid" class="row row-cols-1 row-cols-md-3 g-4 mb-4"></div>
 
@@ -49,7 +62,12 @@
         <div id="fileViewer" class="card mt-4" style="display: none">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4 id="fileTitle" class="mb-0"></h4>
-                <button class="btn btn-outline-secondary btn-sm" onclick="hideFileViewer()">Close</button>
+                <div>
+                    <button class="btn btn-outline-primary btn-sm me-2" onclick="copyContent()">
+                        <i class="bi bi-clipboard"></i> Copy
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="hideFileViewer()">Close</button>
+                </div>
             </div>
             <div class="card-body p-0">
                 <div id="fileContent" class="markdown-body"></div>
