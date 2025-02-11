@@ -1,8 +1,23 @@
 const SUPABASE_URL = 'https://rdnulnsfxbyrfjjbexfy.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkbnVsbnNmeGJ5cmZqamJleGZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkyOTc5NDMsImV4cCI6MjA1NDg3Mzk0M30.BQd7rtzL23BpC45DPDuUVUaNejDfwXwDaML3WKhTcUc'
 
-const { createClient } = supabase;
-const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+// Configure marked for GitHub-style markdown
+marked.setOptions({
+    gfm: true,
+    breaks: true,
+    headerIds: true,
+    langPrefix: 'hljs language-',
+    highlight: function (code, lang) {
+        if (lang && hljs.getLanguage(lang)) {
+            try {
+                return hljs.highlight(code, { language: lang }).value;
+            } catch (err) {}
+        }
+        return code;
+    }
+});
 
 async function loadFiles() {
     const { data, error } = await supabaseClient
@@ -49,10 +64,16 @@ async function viewFile(fileName) {
     const fileContent = document.getElementById('fileContent')
 
     fileTitle.textContent = fileName
-    fileContent.innerHTML = fileName.endsWith('.md') ? marked.parse(text) : `<pre>${text}</pre>`
+    if (fileName.endsWith('.md')) {
+        fileContent.innerHTML = marked.parse(text)
+        // Initialize syntax highlighting
+        fileContent.querySelectorAll('pre code').forEach((block) => {
+            hljs.highlightElement(block);
+        });
+    } else {
+        fileContent.innerHTML = `<pre>${text}</pre>`
+    }
     fileViewer.style.display = 'block'
-
-    // Scroll to the file viewer
     fileViewer.scrollIntoView({ behavior: 'smooth' })
 }
 
