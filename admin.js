@@ -25,12 +25,15 @@ async function loadFiles() {
 
     const filesList = document.getElementById('filesList')
     filesList.innerHTML = data.map(file => `
-        <div class="card mb-3">
-            <div class="card-body">
-                <h5 class="card-title">${file.name}</h5>
-                <div class="btn-group">
-                    <button class="btn btn-primary" onclick="editFile('${file.name}')">Edit</button>
-                    <button class="btn btn-danger" onclick="deleteFile('${file.name}')">Delete</button>
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">${file.name}</h5>
+                    <p class="card-text text-truncate">${file.name}</p>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="editFile('${file.name}')">Edit</button>
+                        <button class="btn btn-danger" onclick="deleteFile('${file.name}')">Delete</button>
+                    </div>
                 </div>
             </div>
         </div>

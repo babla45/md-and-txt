@@ -21,11 +21,15 @@ async function loadFiles() {
             <div class="card h-100">
                 <div class="card-body">
                     <h5 class="card-title">${file.name}</h5>
-                    <button class="btn btn-primary" onclick="viewFile('${file.name}')">Read More</button>
+                    <p class="card-text text-truncate">${file.name}</p>
+                    <button class="btn btn-primary btn-sm" onclick="viewFile('${file.name}')">View More</button>
                 </div>
             </div>
         </div>
     `).join('')
+
+    // Hide file viewer on initial load
+    document.getElementById('fileViewer').style.display = 'none'
 }
 
 async function viewFile(fileName) {
@@ -40,13 +44,20 @@ async function viewFile(fileName) {
     }
 
     const text = await data.text()
-    const modal = new bootstrap.Modal(document.getElementById('fileViewerModal'))
-    const modalTitle = document.querySelector('#fileViewerModal .modal-title')
-    const modalBody = document.querySelector('#fileViewerModal .modal-body')
+    const fileViewer = document.getElementById('fileViewer')
+    const fileTitle = document.getElementById('fileTitle')
+    const fileContent = document.getElementById('fileContent')
 
-    modalTitle.textContent = fileName
-    modalBody.innerHTML = fileName.endsWith('.md') ? marked.parse(text) : text
-    modal.show()
+    fileTitle.textContent = fileName
+    fileContent.innerHTML = fileName.endsWith('.md') ? marked.parse(text) : `<pre>${text}</pre>`
+    fileViewer.style.display = 'block'
+
+    // Scroll to the file viewer
+    fileViewer.scrollIntoView({ behavior: 'smooth' })
+}
+
+function hideFileViewer() {
+    document.getElementById('fileViewer').style.display = 'none'
 }
 
 document.addEventListener('DOMContentLoaded', loadFiles)
