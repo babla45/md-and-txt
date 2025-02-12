@@ -30,7 +30,7 @@
         }
     </style>
 </head>
-<body class="dark-mode">
+<body>
     <div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>Files</h1>
@@ -38,7 +38,7 @@
                 <button class="btn btn-outline-secondary me-2" onclick="toggleDarkMode()">
                     <i class="bi bi-moon-fill"></i> Dark Mode
                 </button>
-                <a href="admin.html" class="btn btn-outline-primary">Admin Panel</a>
+                <button onclick="promptPassword()" class="btn btn-outline-primary">Admin Panel</button>
             </div>
         </div>
 
@@ -81,6 +81,43 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="index.js"></script>
     <script>
+        function encrypt(s, f) {
+            var strArr = s.split('');
+            var sum;
+
+            function process() {
+                sum = strArr.length;
+                for (var i = 0; i < strArr.length; i++) {
+                    sum += strArr[i].charCodeAt(0);
+                    sum %= 128;
+                    var c = Math.max(37, sum);
+                    var newChar = strArr[i].charCodeAt(0) ^ c;
+                    if (newChar <= 33) {
+                        newChar += 32;
+                    } else {
+                        newChar--;
+                    }
+                    strArr[i] = String.fromCharCode(newChar);
+                }
+            }
+
+            while (f-- > 0) {
+                process();
+            }
+
+            return strArr.join('');
+        }
+
+        function promptPassword() {
+            const password = prompt("Enter admin password:");
+            if (encrypt(password, 57) === '-?=') {
+                localStorage.setItem('adminAuth', 'true');
+                window.location.href = 'admin.html';
+            } else {
+                alert('Invalid password');
+            }
+        }
+
         function toggleDarkMode() {
             document.body.classList.toggle('dark-mode');
             const isDark = document.body.classList.contains('dark-mode');
@@ -101,8 +138,8 @@
         }
 
         // Check for saved dark mode preference on load
-        if (localStorage.getItem('darkMode') === 'false') {
-            document.body.classList.remove('dark-mode');
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
             toggleDarkMode(); // Apply correct styles
         }
     </script>

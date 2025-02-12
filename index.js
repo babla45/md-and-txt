@@ -40,11 +40,14 @@ async function loadFiles() {
 
 function displayFiles(files) {
     const fileGrid = document.getElementById('fileGrid')
-    fileGrid.innerHTML = files.map(file => `
+    fileGrid.innerHTML = files.map((file, index) => `
         <div class="col">
             <div class="card h-100">
                 <div class="card-body">
-                    <h5 class="card-title">${file.name}</h5>
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title">${file.name}</h5>
+                        <span class="badge bg-secondary">#${index + 1}</span>
+                    </div>
                     <p class="card-text text-truncate">${file.name}</p>
                     <button class="btn btn-primary btn-sm" onclick="viewFile('${file.name}')">View More</button>
                 </div>

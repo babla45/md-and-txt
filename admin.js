@@ -3,6 +3,8 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
+let allFiles = []; // Add this at the top with other variables
+
 function showNewFileForm() {
     document.getElementById('fileForm').style.display = 'block'
 }
@@ -24,12 +26,19 @@ async function loadFiles() {
         return
     }
 
+    allFiles = data; // Store files for searching
+    displayFiles(data);
+}
+
+function displayFiles(files) {
     const filesList = document.getElementById('filesList')
-    filesList.innerHTML = data.map(file => `
+    filesList.innerHTML = files.map((file, index) => {
+        const indexNum = String(index + 1).padStart(2, '0');
+        return `
         <div class="col">
             <div class="card h-100">
                 <div class="card-body">
-                    <h5 class="card-title">${file.name}</h5>
+                    <h5 class="card-title">#${indexNum} ${file.name}</h5>
                     <p class="card-text text-truncate">${file.name}</p>
                     <div class="btn-group">
                         <button class="btn btn-primary" onclick="editFile('${file.name}')">Edit</button>
@@ -38,7 +47,7 @@ async function loadFiles() {
                 </div>
             </div>
         </div>
-    `).join('')
+    `}).join('')
 }
 
 async function editFile(fileName) {
@@ -133,6 +142,29 @@ async function deleteFile(fileName) {
         console.error('Error:', error)
         alert(error.message)
     }
+}
+
+// Add these new functions
+function handleSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const resetBtn = document.getElementById('resetSearchBtn');
+    const searchTerm = searchInput.value.toLowerCase();
+    
+    resetBtn.style.display = searchTerm.length > 0 ? 'block' : 'none';
+    
+    const filteredFiles = allFiles.filter(file => 
+        file.name.toLowerCase().includes(searchTerm)
+    );
+    displayFiles(filteredFiles);
+}
+
+function resetSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const resetBtn = document.getElementById('resetSearchBtn');
+    
+    searchInput.value = '';
+    resetBtn.style.display = 'none';
+    displayFiles(allFiles);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
