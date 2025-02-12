@@ -35,6 +35,9 @@
                     <i class="bi bi-search"></i>
                 </span>
                 <input type="text" class="form-control" id="searchInput" placeholder="Search files..." onkeyup="handleSearch()">
+                <button class="btn btn-outline-secondary" type="button" id="searchModeBtn" onclick="toggleSearchMode()">
+                    <i class="bi bi-arrow-left-right"></i> Subsequence
+                </button>
                 <button class="btn btn-outline-secondary" type="button" onclick="resetSearch()" id="resetSearchBtn" style="display: none">
                     <i class="bi bi-x-lg"></i>
                 </button>

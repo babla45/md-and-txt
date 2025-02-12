@@ -4,6 +4,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 let allFiles = []; // Add this at the top with other variables
+let isSubsequenceMode = true; // Add at the top with other variables
 
 function showNewFileForm() {
     document.getElementById('fileForm').style.display = 'block'
@@ -145,6 +146,24 @@ async function deleteFile(fileName) {
 }
 
 // Add these new functions
+function isSubsequence(searchStr, fullStr) {
+    if (!searchStr) return true;
+    let searchIndex = 0;
+    for (let i = 0; i < fullStr.length && searchIndex < searchStr.length; i++) {
+        if (searchStr[searchIndex].toLowerCase() === fullStr[i].toLowerCase()) {
+            searchIndex++;
+        }
+    }
+    return searchIndex === searchStr.length;
+}
+
+function toggleSearchMode() {
+    isSubsequenceMode = !isSubsequenceMode;
+    const btn = document.getElementById('searchModeBtn');
+    btn.innerHTML = `<i class="bi bi-arrow-left-right"></i> ${isSubsequenceMode ? 'Subsequence' : 'Substring'}`;
+    handleSearch(); // Refresh search results
+}
+
 function handleSearch() {
     const searchInput = document.getElementById('searchInput');
     const resetBtn = document.getElementById('resetSearchBtn');
@@ -156,8 +175,15 @@ function handleSearch() {
     const filteredFiles = allFiles.map((file, index) => ({ file, originalIndex: index }))
         .filter(({ file, originalIndex }) => {
             const indexNum = String(originalIndex + 1).padStart(2, '0');
-            return file.name.toLowerCase().includes(searchTerm) || 
-                   `#${indexNum}`.includes(searchTerm);
+            const indexStr = `#${indexNum}`;
+            
+            if (isSubsequenceMode) {
+                return isSubsequence(searchTerm, file.name.toLowerCase()) || 
+                       isSubsequence(searchTerm, indexStr.toLowerCase());
+            } else {
+                return file.name.toLowerCase().includes(searchTerm) || 
+                       indexStr.toLowerCase().includes(searchTerm);
+            }
         })
         .map(({ file, originalIndex }) => ({
             ...file,

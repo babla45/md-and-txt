@@ -20,6 +20,7 @@ marked.setOptions({
 });
 
 let allFiles = []; // Store all files for searching
+let isSubsequenceMode = true; // Add at the top with other variables
 
 async function loadFiles() {
     const { data, error } = await supabaseClient
@@ -60,6 +61,25 @@ function displayFiles(files) {
     document.getElementById('fileViewer').style.display = 'none'
 }
 
+// Add this helper function
+function isSubsequence(searchStr, fullStr) {
+    if (!searchStr) return true;
+    let searchIndex = 0;
+    for (let i = 0; i < fullStr.length && searchIndex < searchStr.length; i++) {
+        if (searchStr[searchIndex].toLowerCase() === fullStr[i].toLowerCase()) {
+            searchIndex++;
+        }
+    }
+    return searchIndex === searchStr.length;
+}
+
+function toggleSearchMode() {
+    isSubsequenceMode = !isSubsequenceMode;
+    const btn = document.getElementById('searchModeBtn');
+    btn.innerHTML = `<i class="bi bi-arrow-left-right"></i> ${isSubsequenceMode ? 'Subsequence' : 'Substring'}`;
+    handleSearch(); // Refresh search results
+}
+
 function handleSearch() {
     const searchInput = document.getElementById('searchInput');
     const resetBtn = document.getElementById('resetSearchBtn');
@@ -67,16 +87,22 @@ function handleSearch() {
     
     resetBtn.style.display = searchTerm.length > 0 ? 'block' : 'none';
     
-    // Filter files while preserving original indices
     const filteredFiles = allFiles.map((file, index) => ({ file, originalIndex: index }))
         .filter(({ file, originalIndex }) => {
             const indexNum = String(originalIndex + 1).padStart(2, '0');
-            return file.name.toLowerCase().includes(searchTerm) || 
-                   `#${indexNum}`.includes(searchTerm);
+            const indexStr = `#${indexNum}`;
+            
+            if (isSubsequenceMode) {
+                return isSubsequence(searchTerm, file.name.toLowerCase()) || 
+                       isSubsequence(searchTerm, indexStr.toLowerCase());
+            } else {
+                return file.name.toLowerCase().includes(searchTerm) || 
+                       indexStr.toLowerCase().includes(searchTerm);
+            }
         })
         .map(({ file, originalIndex }) => ({
             ...file,
-            originalIndex // Add originalIndex to the file object
+            originalIndex
         }));
 
     displayFiles(filteredFiles);
