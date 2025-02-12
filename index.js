@@ -40,20 +40,22 @@ async function loadFiles() {
 
 function displayFiles(files) {
     const fileGrid = document.getElementById('fileGrid')
-    fileGrid.innerHTML = files.map((file, index) => `
+    fileGrid.innerHTML = files.map(file => {
+        const indexNum = String((file.originalIndex || files.indexOf(file)) + 1).padStart(2, '0');
+        return `
         <div class="col">
             <div class="card h-100">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <h5 class="card-title">${file.name}</h5>
-                        <span class="badge bg-secondary">#${index + 1}</span>
+                        <span class="badge bg-secondary">#${indexNum}</span>
                     </div>
                     <p class="card-text text-truncate">${file.name}</p>
                     <button class="btn btn-primary btn-sm" onclick="viewFile('${file.name}')">View More</button>
                 </div>
             </div>
         </div>
-    `).join('')
+    `}).join('')
 
     document.getElementById('fileViewer').style.display = 'none'
 }
@@ -63,13 +65,20 @@ function handleSearch() {
     const resetBtn = document.getElementById('resetSearchBtn');
     const searchTerm = searchInput.value.toLowerCase();
     
-    // Show/hide reset button based on search input
     resetBtn.style.display = searchTerm.length > 0 ? 'block' : 'none';
     
-    // Filter files
-    const filteredFiles = allFiles.filter(file => 
-        file.name.toLowerCase().includes(searchTerm)
-    );
+    // Filter files while preserving original indices
+    const filteredFiles = allFiles.map((file, index) => ({ file, originalIndex: index }))
+        .filter(({ file, originalIndex }) => {
+            const indexNum = String(originalIndex + 1).padStart(2, '0');
+            return file.name.toLowerCase().includes(searchTerm) || 
+                   `#${indexNum}`.includes(searchTerm);
+        })
+        .map(({ file, originalIndex }) => ({
+            ...file,
+            originalIndex // Add originalIndex to the file object
+        }));
+
     displayFiles(filteredFiles);
 }
 

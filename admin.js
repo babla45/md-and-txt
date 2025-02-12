@@ -32,8 +32,8 @@ async function loadFiles() {
 
 function displayFiles(files) {
     const filesList = document.getElementById('filesList')
-    filesList.innerHTML = files.map((file, index) => {
-        const indexNum = String(index + 1).padStart(2, '0');
+    filesList.innerHTML = files.map(file => {
+        const indexNum = String((file.originalIndex || files.indexOf(file)) + 1).padStart(2, '0');
         return `
         <div class="col">
             <div class="card h-100">
@@ -152,9 +152,18 @@ function handleSearch() {
     
     resetBtn.style.display = searchTerm.length > 0 ? 'block' : 'none';
     
-    const filteredFiles = allFiles.filter(file => 
-        file.name.toLowerCase().includes(searchTerm)
-    );
+    // Filter files while preserving original indices
+    const filteredFiles = allFiles.map((file, index) => ({ file, originalIndex: index }))
+        .filter(({ file, originalIndex }) => {
+            const indexNum = String(originalIndex + 1).padStart(2, '0');
+            return file.name.toLowerCase().includes(searchTerm) || 
+                   `#${indexNum}`.includes(searchTerm);
+        })
+        .map(({ file, originalIndex }) => ({
+            ...file,
+            originalIndex
+        }));
+
     displayFiles(filteredFiles);
 }
 
