@@ -21,6 +21,7 @@ marked.setOptions({
 
 let allFiles = []; // Store all files for searching
 let isSubsequenceMode = true; // Add at the top with other variables
+let currentViewingFile = null; // Add this at the top with other variables
 
 async function loadFiles() {
     const { data, error } = await supabaseClient
@@ -117,7 +118,14 @@ function resetSearch() {
     displayFiles(allFiles);
 }
 
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 async function viewFile(fileName) {
+    currentViewingFile = fileName; // Store the current file being viewed
     const { data, error } = await supabaseClient
         .storage
         .from('mdtxt')
@@ -150,7 +158,8 @@ async function viewFile(fileName) {
             hljs.highlightElement(block);
         });
     } else {
-        fileContent.innerHTML = `<pre>${text}</pre>`
+        // For text files, escape HTML before displaying
+        fileContent.innerHTML = `<pre>${escapeHtml(text)}</pre>`
     }
     fileViewer.style.display = 'block'
     fileViewer.scrollIntoView({ behavior: 'smooth' })
@@ -192,6 +201,30 @@ async function copyContent() {
 
 function hideFileViewer() {
     document.getElementById('fileViewer').style.display = 'none'
+    
+    // Find the card of the file that was being viewed
+    if (currentViewingFile) {
+        const files = document.querySelectorAll('.card');
+        files.forEach(card => {
+            if (card.querySelector('.card-title').textContent === currentViewingFile) {
+                // Remove highlight from all cards first
+                document.querySelectorAll('.card.highlight').forEach(c => c.classList.remove('highlight'));
+                
+                // Scroll first, then add highlight
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                // Add highlight after scrolling
+                setTimeout(() => {
+                    card.classList.add('highlight');
+                    // Remove highlight after animation
+                    setTimeout(() => {
+                        card.classList.remove('highlight');
+                    }, 2000);
+                }, 500); // Wait for scroll to complete
+            }
+        });
+        currentViewingFile = null;
+    }
 }
 
 document.addEventListener('DOMContentLoaded', loadFiles)
