@@ -39,8 +39,10 @@ function displayFiles(files) {
         <div class="col">
             <div class="card h-100">
                 <div class="card-body">
-                    <h5 class="card-title">#${indexNum} ${file.name}</h5>
-                    <p class="card-text text-truncate">${file.name}</p>
+                    <div class="d-flex justify-content-between align-items-start">
+                        <h5 class="card-title" title="${file.name}">#${indexNum} ${file.name}</h5>
+                    </div>
+                    <p class="card-text text-muted small">${file.name.split('.').pop().toUpperCase()} file</p>
                     <div class="btn-group">
                         <button class="btn btn-primary" onclick="editFile('${file.name}')">Edit</button>
                         <button class="btn btn-danger" onclick="deleteFile('${file.name}')">Delete</button>

@@ -46,14 +46,13 @@ function displayFiles(files) {
         const indexNum = String((file.originalIndex || files.indexOf(file)) + 1).padStart(2, '0');
         return `
         <div class="col">
-            <div class="card h-100">
+            <div class="card h-100" onclick="viewFile('${file.name}')" role="button">
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <h5 class="card-title">${file.name}</h5>
-                        <span class="badge bg-secondary">#${indexNum}</span>
+                    <div class="d-flex justify-content-between align-items-start">
+                        <h5 class="card-title" title="${file.name}">${file.name}</h5>
+                        <span class="badge bg-secondary flex-shrink-0 ms-1">#${indexNum}</span>
                     </div>
-                    <p class="card-text text-truncate">${file.name}</p>
-                    <button class="btn btn-primary btn-sm" onclick="viewFile('${file.name}')">View More</button>
+                    <p class="card-text text-muted small">${file.name.split('.').pop().toUpperCase()} file</p>
                 </div>
             </div>
         </div>
@@ -125,11 +124,11 @@ function escapeHtml(text) {
 }
 
 async function viewFile(fileName) {
-    currentViewingFile = fileName; // Store the current file being viewed
+    currentViewingFile = fileName;
     const { data, error } = await supabaseClient
         .storage
         .from('mdtxt')
-        .download(fileName)
+        .download(fileName);
 
     if (error) {
         console.error('Error loading file:', error)
@@ -141,7 +140,13 @@ async function viewFile(fileName) {
     const fileTitle = document.getElementById('fileTitle')
     const fileContent = document.getElementById('fileContent')
 
-    fileTitle.textContent = fileName
+    // Find the index number for this file
+    const fileIndex = allFiles.findIndex(f => f.name === fileName);
+    const indexNum = String(fileIndex + 1).padStart(2, '0');
+    
+    // Update title with index
+    fileTitle.textContent = `#${indexNum} ${fileName}`;
+
     if (fileName.endsWith('.md')) {
         // Update markdown and syntax styles based on current theme before rendering
         const isDark = document.body.classList.contains('dark-mode');
@@ -202,25 +207,31 @@ async function copyContent() {
 function hideFileViewer() {
     document.getElementById('fileViewer').style.display = 'none'
     
-    // Find the card of the file that was being viewed
     if (currentViewingFile) {
         const files = document.querySelectorAll('.card');
         files.forEach(card => {
             if (card.querySelector('.card-title').textContent === currentViewingFile) {
-                // Remove highlight from all cards first
-                document.querySelectorAll('.card.highlight').forEach(c => c.classList.remove('highlight'));
+                // Remove highlight and scroll-reveal from all cards
+                document.querySelectorAll('.card').forEach(c => {
+                    c.classList.remove('highlight', 'scroll-reveal');
+                });
                 
-                // Scroll first, then add highlight
-                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Scroll to card with animation
+                card.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center'
+                });
                 
-                // Add highlight after scrolling
+                // Add animations after scrolling
                 setTimeout(() => {
+                    card.classList.add('scroll-reveal');
                     card.classList.add('highlight');
+                    
                     // Remove highlight after animation
                     setTimeout(() => {
                         card.classList.remove('highlight');
                     }, 2000);
-                }, 500); // Wait for scroll to complete
+                }, 500);
             }
         });
         currentViewingFile = null;
