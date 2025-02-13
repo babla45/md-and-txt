@@ -44,8 +44,8 @@ function displayFiles(files) {
                     </div>
                     <p class="card-text text-muted small">${file.name.split('.').pop().toUpperCase()} file</p>
                     <div class="btn-group">
-                        <button class="btn btn-primary" onclick="editFile('${file.name}')">Edit</button>
-                        <button class="btn btn-danger" onclick="deleteFile('${file.name}')">Delete</button>
+                        <button class="btnedit" onclick="editFile('${file.name}')">Edit</button>
+                        <button class="btndel" onclick="deleteFile('${file.name}')">Delete</button>
                     </div>
                 </div>
             </div>
