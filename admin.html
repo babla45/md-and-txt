@@ -35,7 +35,7 @@
                     <i class="bi bi-search"></i>
                 </span>
                 <input type="text" class="form-control" id="searchInput" placeholder="Search files..." onkeyup="handleSearch()">
-                <button class="btn btn-outline-secondary" type="button" id="searchModeBtn" onclick="toggleSearchMode()">
+                <button class="btn btn-outline-secondary search-mode-btn" type="button" id="searchModeBtn" onclick="toggleSearchMode()">
                     <i class="bi bi-arrow-left-right"></i> Subsequence
                 </button>
                 <button class="btn btn-outline-secondary" type="button" onclick="resetSearch()" id="resetSearchBtn" style="display: none">
@@ -65,7 +65,7 @@
             </form>
         </div>
 
-        <div id="filesList" class="row row-cols-1 row-cols-md-3 g-4"></div>
+        <div id="filesList" class="row row-cols-1 row-cols-md-5 g-4"></div>
     </div>
 
     <br><br><br><br><br>

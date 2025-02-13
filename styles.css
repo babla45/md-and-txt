@@ -209,3 +209,56 @@ body.dark-mode {
 .scroll-reveal {
     animation: scrollReveal 0.5s ease forwards;
 }
+
+/* Search mode button styles */
+.search-mode-btn {
+    position: relative;
+    background-color: var(--border-light);
+    border: 1px solid rgb(225, 221, 221);
+    font-weight: 500;
+    min-width: 120px;
+}
+
+.admin-pannel-btn, .dark-mode-btn {
+    box-shadow: 0 4px 12px  rgba(3, 0, 0, 0.168);
+    border-radius: 5px;
+}
+
+.dark-mode .admin-pannel-btn, .dark-mode-btn {
+    box-shadow: 0 0px 6px 1px   rgba(4, 74, 64, 0.269);
+    border-radius: 5px;
+}
+
+.admin-pannel-btn, .dark-mode-btn {
+    border: 0px solid;
+}
+
+
+.search-mode-btn:hover {
+    background-color: var(--border-light);
+    color: black;
+    border-color: var(--text-light);
+}
+
+.dark-mode .search-mode-btn {
+    border-color: var(--border-dark);
+    background-color: #0f0f0f;
+}
+
+.dark-mode .search-mode-btn:hover {
+    background-color: var(--border-dark);
+    border-color: var(--text-dark);
+    color: #ffffff;
+}
+
+/* Adjust card sizes for 5-column layout */
+@media (min-width: 768px) {
+    .row-cols-md-5 > .col {
+        flex: 0 0 20%;
+        max-width: 20%;
+    }
+
+    .card .card-title {
+        font-size: 0.95rem;
+    }
+}

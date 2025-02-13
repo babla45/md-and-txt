@@ -33,12 +33,12 @@
 <body>
     <div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>Files</h1>
+            <h1>Files and Notes</h1>
             <div>
-                <button class="btn btn-outline-secondary me-2" onclick="toggleDarkMode()">
+                <button class="btn btn-outline-secondary me-2 dark-mode-btn" onclick="toggleDarkMode()">
                     <i class="bi bi-moon-fill"></i> Dark Mode
                 </button>
-                <button onclick="promptPassword()" class="btn btn-outline-primary">Admin Panel</button>
+                <button onclick="promptPassword()" class="btn btn-outline-primary admin-pannel-btn">Admin Panel</button>
             </div>
         </div>
 
@@ -49,7 +49,7 @@
                     <i class="bi bi-search"></i>
                 </span>
                 <input type="text" class="form-control" id="searchInput" placeholder="Search files..." onkeyup="handleSearch()">
-                <button class="btn btn-outline-secondary" type="button" id="searchModeBtn" onclick="toggleSearchMode()">
+                <button class="btn btn-outline-secondary search-mode-btn" type="button" id="searchModeBtn" onclick="toggleSearchMode()">
                     <i class="bi bi-arrow-left-right"></i> Subsequence
                 </button>
                 <button class="btn btn-outline-secondary" type="button" onclick="resetSearch()" id="resetSearchBtn" style="display: none">
@@ -59,7 +59,7 @@
         </div>
 
         <!-- File Grid -->
-        <div id="fileGrid" class="row row-cols-1 row-cols-md-3 g-4 mb-4"></div>
+        <div id="fileGrid" class="row row-cols-1 row-cols-md-5 g-4 mb-4"></div>
 
         <!-- Content Viewer (initially hidden) -->
         <div id="fileViewer" class="card mt-4" style="display: none">
