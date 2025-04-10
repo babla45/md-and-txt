@@ -5,6 +5,7 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 let allFiles = []; // Add this at the top with other variables
 let isSubsequenceMode = true; // Add at the top with other variables
+let currentViewingFile = null;
 
 function showNewFileForm() {
     document.getElementById('fileForm').style.display = 'block'
@@ -44,6 +45,7 @@ function displayFiles(files) {
                     </div>
                     <p class="card-text text-muted small">${file.name.split('.').pop().toUpperCase()} file</p>
                     <div class="btn-group">
+                        <button class="btn btn-sm btn-success me-1" onclick="viewFile('${file.name}')">View</button>
                         <button class="btnedit" onclick="editFile('${file.name}')">Edit</button>
                         <button class="btndel" onclick="deleteFile('${file.name}')">Delete</button>
                     </div>
@@ -202,6 +204,139 @@ function resetSearch() {
     searchInput.value = '';
     resetBtn.style.display = 'none';
     displayFiles(allFiles);
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+async function viewFile(fileName) {
+    currentViewingFile = fileName; // Store current file
+    
+    // Show file viewer with loading indicator
+    const fileViewer = document.getElementById('fileViewer');
+    const fileTitle = document.getElementById('viewerFileTitle');
+    const fileContent = document.getElementById('viewerFileContent');
+    
+    // Set initial loading state
+    fileTitle.textContent = `Loading ${fileName}...`;
+    fileContent.innerHTML = `
+        <div class="text-center p-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Loading file content...</p>
+        </div>
+    `;
+    fileViewer.style.display = 'block';
+    fileViewer.scrollIntoView({ behavior: 'smooth' });
+    
+    try {
+        const { data, error } = await supabaseClient
+            .storage
+            .from('mdtxt')
+            .download(fileName);
+
+        if (error) {
+            throw new Error(`Error downloading file: ${error.message || 'Unknown error'}`);
+        }
+
+        const text = await data.text();
+        
+        // Find the index number for this file
+        const fileIndex = allFiles.findIndex(f => f.name === fileName);
+        const indexNum = String(fileIndex + 1).padStart(2, '0');
+        
+        // Update title with index
+        fileTitle.textContent = `#${indexNum} ${fileName}`;
+
+        if (fileName.endsWith('.md')) {
+            // Store raw content for copying
+            fileContent.setAttribute('data-raw-content', text);
+            fileContent.innerHTML = marked.parse(text);
+            // Initialize syntax highlighting
+            fileContent.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        } else {
+            // For text files, escape HTML before displaying
+            fileContent.innerHTML = `<pre>${escapeHtml(text)}</pre>`;
+        }
+    } catch (error) {
+        console.error('Error loading file:', error);
+        
+        // Show error message in the file viewer
+        fileTitle.textContent = `Error Loading: ${fileName}`;
+        fileContent.innerHTML = `
+            <div class="alert alert-danger m-4">
+                <h5><i class="bi bi-exclamation-triangle-fill me-2"></i>Failed to load file</h5>
+                <p class="mb-0">There was a problem loading this file. This could be due to a network issue or the file may no longer exist.</p>
+                <p class="text-muted mt-2 mb-0"><small>Error details: ${error.message || 'Unknown error'}</small></p>
+            </div>
+        `;
+    }
+}
+
+async function copyContent() {
+    const content = document.getElementById('viewerFileContent');
+    let textToCopy;
+    
+    // If it's markdown, get the raw text from the data attribute
+    if (content.hasAttribute('data-raw-content')) {
+        textToCopy = content.getAttribute('data-raw-content');
+    } else {
+        // For text files, get the content from pre tag
+        textToCopy = content.textContent;
+    }
+
+    try {
+        await navigator.clipboard.writeText(textToCopy);
+        const copyBtn = document.querySelector('#fileViewer .btn-primary');
+        const originalHtml = copyBtn.innerHTML;
+        
+        // Show success feedback
+        copyBtn.innerHTML = '<i class="bi bi-check"></i> Copied!';
+        setTimeout(() => {
+            copyBtn.innerHTML = originalHtml;
+        }, 2000);
+    } catch (err) {
+        console.error('Failed to copy:', err);
+        alert('Failed to copy content');
+    }
+}
+
+function hideFileViewer() {
+    document.getElementById('fileViewer').style.display = 'none'
+    
+    if (currentViewingFile) {
+        const cards = document.querySelectorAll('.card');
+        cards.forEach(card => {
+            const cardTitle = card.querySelector('.card-title');
+            if (cardTitle && cardTitle.title === currentViewingFile) {
+                // Remove highlight from all cards
+                document.querySelectorAll('.card').forEach(c => {
+                    c.classList.remove('highlight');
+                });
+                
+                // Scroll to card with animation
+                card.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center'
+                });
+                
+                // Add highlight animation
+                card.classList.add('highlight');
+                
+                // Remove highlight after animation completes
+                setTimeout(() => {
+                    card.classList.remove('highlight');
+                }, 2000);
+            }
+        });
+        currentViewingFile = null;
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {

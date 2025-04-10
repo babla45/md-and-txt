@@ -125,49 +125,76 @@ function escapeHtml(text) {
 
 async function viewFile(fileName) {
     currentViewingFile = fileName;
-    const { data, error } = await supabaseClient
-        .storage
-        .from('mdtxt')
-        .download(fileName);
-
-    if (error) {
-        console.error('Error loading file:', error)
-        return
-    }
-
-    const text = await data.text()
-    const fileViewer = document.getElementById('fileViewer')
-    const fileTitle = document.getElementById('fileTitle')
-    const fileContent = document.getElementById('fileContent')
-
-    // Find the index number for this file
-    const fileIndex = allFiles.findIndex(f => f.name === fileName);
-    const indexNum = String(fileIndex + 1).padStart(2, '0');
     
-    // Update title with index
-    fileTitle.textContent = `#${indexNum} ${fileName}`;
+    // Show file viewer with loading indicator
+    const fileViewer = document.getElementById('fileViewer');
+    const fileTitle = document.getElementById('fileTitle');
+    const fileContent = document.getElementById('fileContent');
+    
+    // Set initial loading state
+    fileTitle.textContent = `Loading ${fileName}...`;
+    fileContent.innerHTML = `
+        <div class="text-center p-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Loading file content...</p>
+        </div>
+    `;
+    fileViewer.style.display = 'block';
+    fileViewer.scrollIntoView({ behavior: 'smooth' });
+    
+    try {
+        const { data, error } = await supabaseClient
+            .storage
+            .from('mdtxt')
+            .download(fileName);
 
-    if (fileName.endsWith('.md')) {
-        // Update markdown and syntax styles based on current theme before rendering
-        const isDark = document.body.classList.contains('dark-mode');
-        document.getElementById('markdown-style').href = 
-            `https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown${isDark ? '-dark' : ''}.min.css`;
-        document.getElementById('highlight-style').href = 
-            `https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github${isDark ? '-dark' : ''}.min.css`;
+        if (error) {
+            throw new Error(`Error downloading file: ${error.message || 'Unknown error'}`);
+        }
 
-        // Store raw content for copying
-        fileContent.setAttribute('data-raw-content', text);
-        fileContent.innerHTML = marked.parse(text)
-        // Initialize syntax highlighting
-        fileContent.querySelectorAll('pre code').forEach((block) => {
-            hljs.highlightElement(block);
-        });
-    } else {
-        // For text files, escape HTML before displaying
-        fileContent.innerHTML = `<pre>${escapeHtml(text)}</pre>`
+        const text = await data.text();
+        
+        // Find the index number for this file
+        const fileIndex = allFiles.findIndex(f => f.name === fileName);
+        const indexNum = String(fileIndex + 1).padStart(2, '0');
+        
+        // Update title with index
+        fileTitle.textContent = `#${indexNum} ${fileName}`;
+
+        if (fileName.endsWith('.md')) {
+            // Update markdown and syntax styles based on current theme before rendering
+            const isDark = document.body.classList.contains('dark-mode');
+            document.getElementById('markdown-style').href = 
+                `https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown${isDark ? '-dark' : ''}.min.css`;
+            document.getElementById('highlight-style').href = 
+                `https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github${isDark ? '-dark' : ''}.min.css`;
+
+            // Store raw content for copying
+            fileContent.setAttribute('data-raw-content', text);
+            fileContent.innerHTML = marked.parse(text);
+            // Initialize syntax highlighting
+            fileContent.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        } else {
+            // For text files, escape HTML before displaying
+            fileContent.innerHTML = `<pre>${escapeHtml(text)}</pre>`;
+        }
+    } catch (error) {
+        console.error('Error loading file:', error);
+        
+        // Show error message in the file viewer
+        fileTitle.textContent = `Error Loading: ${fileName}`;
+        fileContent.innerHTML = `
+            <div class="alert alert-danger m-4">
+                <h5><i class="bi bi-exclamation-triangle-fill me-2"></i>Failed to load file</h5>
+                <p class="mb-0">There was a problem loading this file. This could be due to a network issue or the file may no longer exist.</p>
+                <p class="text-muted mt-2 mb-0"><small>Error details: ${error.message || 'Unknown error'}</small></p>
+            </div>
+        `;
     }
-    fileViewer.style.display = 'block'
-    fileViewer.scrollIntoView({ behavior: 'smooth' })
 }
 
 async function copyContent() {
