@@ -31,6 +31,11 @@
             </div>
         </div>
         <button class="btn btn-primary mb-4" onclick="showNewFileForm()">Add New File</button>
+        <button class="btn btn-success mb-4 ms-2" onclick="document.getElementById('importFileInput').click()">
+            <i class="bi bi-upload"></i> Import Files
+        </button>
+        <input type="file" id="importFileInput" accept=".md,.txt" multiple style="display:none" onchange="importFiles(this.files)">
+        <span id="importStatus" class="mb-4 ms-2 text-muted small"></span>
         
         <!-- Add search box -->
         <div class="mb-4">

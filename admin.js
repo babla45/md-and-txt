@@ -10,6 +10,49 @@ function hideNewFileForm() {
     document.getElementById('fileForm').style.display = 'none'
 }
 
+async function importFiles(fileList) {
+    if (!fileList || fileList.length === 0) return;
+
+    const statusEl = document.getElementById('importStatus');
+    const total = fileList.length;
+    let imported = 0;
+    let failed = 0;
+
+    statusEl.textContent = `Importing 0/${total}...`;
+
+    for (const file of fileList) {
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (ext !== 'md' && ext !== 'txt') {
+            failed++;
+            continue;
+        }
+
+        try {
+            const content = await file.text();
+            await db.collection('files').add({
+                name: file.name,
+                content: content,
+                created_at: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            imported++;
+            statusEl.textContent = `Importing ${imported}/${total}...`;
+        } catch (err) {
+            console.error(`Failed to import ${file.name}:`, err);
+            failed++;
+        }
+    }
+
+    // Reset file input so the same files can be re-selected
+    document.getElementById('importFileInput').value = '';
+
+    const msg = `Imported ${imported} file${imported !== 1 ? 's' : ''}` +
+        (failed > 0 ? `, ${failed} failed` : '');
+    statusEl.textContent = msg;
+    setTimeout(() => { statusEl.textContent = ''; }, 4000);
+
+    if (imported > 0) await loadFiles();
+}
+
 async function loadFiles() {
     try {
         const snapshot = await db.collection('files').orderBy('created_at', 'desc').get();
