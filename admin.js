@@ -1,8 +1,3 @@
-const SUPABASE_URL = 'https://rdnulnsfxbyrfjjbexfy.supabase.co'
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkbnVsbnNmeGJ5cmZqamJleGZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkyOTc5NDMsImV4cCI6MjA1NDg3Mzk0M30.BQd7rtzL23BpC45DPDuUVUaNejDfwXwDaML3WKhTcUc'
-
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-
 let allFiles = []; // Add this at the top with other variables
 let isSubsequenceMode = true; // Add at the top with other variables
 let currentViewingFile = null;
@@ -16,20 +11,20 @@ function hideNewFileForm() {
 }
 
 async function loadFiles() {
-    const { data, error } = await supabaseClient
-        .storage
-        .from('mdtxt')
-        .list('', {
-            sortBy: { column: 'created_at', order: 'desc' }
-        })
+    try {
+        const snapshot = await db.collection('files').orderBy('created_at', 'desc').get();
+        const data = snapshot.docs.map(doc => ({
+            id: doc.id,
+            name: doc.data().name,
+            content: doc.data().content,
+            created_at: doc.data().created_at
+        }));
 
-    if (error) {
-        console.error('Error loading files:', error)
-        return
+        allFiles = data;
+        displayFiles(data);
+    } catch (error) {
+        console.error('Error loading files:', error);
     }
-
-    allFiles = data; // Store files for searching
-    displayFiles(data);
 }
 
 function displayFiles(files) {
@@ -56,17 +51,13 @@ function displayFiles(files) {
 }
 
 async function editFile(fileName) {
-    const { data, error } = await supabaseClient
-        .storage
-        .from('mdtxt')
-        .download(fileName)
-
-    if (error) {
-        console.error('Error downloading file:', error)
-        return
+    const fileData = allFiles.find(f => f.name === fileName);
+    if (!fileData) {
+        console.error('File not found:', fileName);
+        return;
     }
 
-    const content = await data.text()
+    const content = fileData.content;
     const fileNameParts = fileName.split('.')
     const title = fileNameParts.slice(0, -1).join('.')
     const type = fileNameParts.pop()
@@ -89,30 +80,32 @@ async function saveFile(event) {
     const oldFileName = document.getElementById('oldFileName').value
 
     try {
-        if (oldFileName && oldFileName !== fileName) {
-            const { error: deleteError } = await supabaseClient
-                .storage
-                .from('mdtxt')
-                .remove([oldFileName])
-                
-            if (deleteError) {
-                throw new Error('Failed to delete old file: ' + deleteError.message)
+        if (oldFileName) {
+            // Editing existing file
+            const existingFile = allFiles.find(f => f.name === oldFileName);
+            if (existingFile) {
+                if (oldFileName !== fileName) {
+                    // Name changed: delete old doc and create new one
+                    await db.collection('files').doc(existingFile.id).delete();
+                    await db.collection('files').add({
+                        name: fileName,
+                        content: content,
+                        created_at: existingFile.created_at || firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } else {
+                    // Same name: just update content
+                    await db.collection('files').doc(existingFile.id).update({
+                        content: content
+                    });
+                }
             }
-        }
-
-        const blob = new Blob([content], { 
-            type: type === 'md' ? 'text/markdown' : 'text/plain' 
-        })
-
-        const { error: uploadError } = await supabaseClient
-            .storage
-            .from('mdtxt')
-            .upload(fileName, blob, {
-                upsert: true
-            })
-
-        if (uploadError) {
-            throw new Error('Failed to save file: ' + uploadError.message)
+        } else {
+            // New file
+            await db.collection('files').add({
+                name: fileName,
+                content: content,
+                created_at: firebase.firestore.FieldValue.serverTimestamp()
+            });
         }
 
         hideNewFileForm()
@@ -132,14 +125,12 @@ async function deleteFile(fileName) {
             return
         }
 
-        const { error } = await supabaseClient
-            .storage
-            .from('mdtxt')
-            .remove([fileName])
-
-        if (error) {
-            throw new Error('Failed to delete file: ' + error.message)
+        const fileData = allFiles.find(f => f.name === fileName);
+        if (!fileData) {
+            throw new Error('File not found');
         }
+
+        await db.collection('files').doc(fileData.id).delete();
 
         await loadFiles()
         alert('File deleted successfully!')
@@ -234,16 +225,12 @@ async function viewFile(fileName) {
     fileViewer.scrollIntoView({ behavior: 'smooth' });
     
     try {
-        const { data, error } = await supabaseClient
-            .storage
-            .from('mdtxt')
-            .download(fileName);
-
-        if (error) {
-            throw new Error(`Error downloading file: ${error.message || 'Unknown error'}`);
+        const fileData = allFiles.find(f => f.name === fileName);
+        if (!fileData) {
+            throw new Error('File not found');
         }
 
-        const text = await data.text();
+        const text = fileData.content;
         
         // Find the index number for this file
         const fileIndex = allFiles.findIndex(f => f.name === fileName);

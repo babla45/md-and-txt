@@ -1,8 +1,3 @@
-const SUPABASE_URL = 'https://rdnulnsfxbyrfjjbexfy.supabase.co'
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkbnVsbnNmeGJ5cmZqamJleGZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkyOTc5NDMsImV4cCI6MjA1NDg3Mzk0M30.BQd7rtzL23BpC45DPDuUVUaNejDfwXwDaML3WKhTcUc'
-
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-
 // Configure marked for GitHub-style markdown
 marked.setOptions({
     gfm: true,
@@ -24,20 +19,20 @@ let isSubsequenceMode = true; // Add at the top with other variables
 let currentViewingFile = null; // Add this at the top with other variables
 
 async function loadFiles() {
-    const { data, error } = await supabaseClient
-        .storage
-        .from('mdtxt')
-        .list('', {
-            sortBy: { column: 'created_at', order: 'desc' }
-        })
+    try {
+        const snapshot = await db.collection('files').orderBy('created_at', 'desc').get();
+        const data = snapshot.docs.map(doc => ({
+            id: doc.id,
+            name: doc.data().name,
+            content: doc.data().content,
+            created_at: doc.data().created_at
+        }));
 
-    if (error) {
-        console.error('Error loading files:', error)
-        return
+        allFiles = data;
+        displayFiles(data);
+    } catch (error) {
+        console.error('Error loading files:', error);
     }
-
-    allFiles = data; // Store files for searching
-    displayFiles(data);
 }
 
 function displayFiles(files) {
@@ -148,17 +143,15 @@ function escapeHtml(text) {
 
 async function viewFile(fileName) {
     currentViewingFile = fileName;
-    const { data, error } = await supabaseClient
-        .storage
-        .from('mdtxt')
-        .download(fileName);
-
-    if (error) {
-        console.error('Error loading file:', error)
-        return
+    
+    // Find the file in allFiles (content is already loaded)
+    const fileData = allFiles.find(f => f.name === fileName);
+    if (!fileData) {
+        console.error('File not found:', fileName);
+        return;
     }
 
-    const text = await data.text()
+    const text = fileData.content;
     const fileViewer = document.getElementById('fileViewer')
     const fileTitle = document.getElementById('fileTitle')
     const fileContent = document.getElementById('fileContent')
